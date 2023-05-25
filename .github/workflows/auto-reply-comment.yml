@@ -1,0 +1,39 @@
+name: auto-reply-comment
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  auto-reply:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: npm install @octokit/rest
+
+    - name: Auto-reply comment
+      env:
+        GITHUB_TOKEN: ${{ secrets.AUTO_REPLY }}
+      run: |
+        const { Octokit } = require("@octokit/rest");
+        const octokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+        const { issue, comment, pull_request } = github.context.payload;
+        const issueNumber = issue ? issue.number : pull_request.number;
+        const repo = github.context.payload.repository.full_name;
+
+        const reply = "Thank you for your comment! We will get back to you as soon as possible.";
+
+        octokit.issues.createComment({
+          repo,
+          issue_number: issueNumber,
+          body: reply,
+          headers: {
+            accept: "application/vnd.github.squirrel-girl-preview+json"
+         }
+        });
